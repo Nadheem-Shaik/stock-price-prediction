@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Price Prediction - Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="{{ url_for('index') }}" class="navbar-brand">
+                <i class="fas fa-chart-line"></i>
+                <span>StockPredict</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="card fade-in">
+            <div class="prediction-header">
+                <div>
+                    <h1 class="prediction-title">Prediction Results</h1>
+                    <p>Based on LSTM neural network analysis</p>
+                </div>
+                <div>
+                    <div class="prediction-ticker">{{ ticker }}</div>
+                    <p>{{ company_name }}</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Current Price</div>
+                    <div class="stat-value">${{ current_price }}</div>
+                    <div class="stat-change {{ 'positive' if price_change > 0 else 'negative' }}">
+                        {% if price_change > 0 %}
+                        <i class="fas fa-arrow-up"></i>
+                        {% else %}
+                        <i class="fas fa-arrow-down"></i>
+                        {% endif %}
+                        {{ price_change }}% today
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Predicted (Tomorrow)</div>
+                    <div class="stat-value">${{ predictions[0]['price'] }}</div>
+                    <div class="stat-change {{ 'positive' if predictions[0]['change'] > 0 else 'negative' }}">
+                        {% if predictions[0]['change'] > 0 %}
+                        <i class="fas fa-arrow-up"></i>
+                        {% else %}
+                        <i class="fas fa-arrow-down"></i>
+                        {% endif %}
+                        {{ predictions[0]['change'] }}%
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">5-Day Forecast</div>
+                    <div class="stat-value">${{ predictions[4]['price'] }}</div>
+                    <div class="stat-change {{ 'positive' if predictions[4]['change'] > 0 else 'negative' }}">
+                        {% if predictions[4]['change'] > 0 %}
+                        <i class="fas fa-arrow-up"></i>
+                        {% else %}
+                        <i class="fas fa-arrow-down"></i>
+                        {% endif %}
+                        {{ predictions[4]['change'] }}%
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Model Confidence</div>
+                    <div class="stat-value">{{ accuracy }}%</div>
+                    <div class="stat-title">Based on historical accuracy</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="predictionChart"></canvas>
+            </div>
+
+            <div class="prediction-table-container">
+                <h3>Detailed Price Predictions</h3>
+                <table class="prediction-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Predicted Price</th>
+                            <th>Change</th>
+                            <th>Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prediction in predictions %}
+                        <tr>
+                            <td>{{ prediction['date'] }}</td>
+                            <td>${{ prediction['price'] }}</td>
+                            <td class="{{ 'positive' if prediction['change'] > 0 else 'negative' }}">
+                                {% if prediction['change'] > 0 %}
+                                <i class="fas fa-arrow-up"></i>
+                                {% else %}
+                                <i class="fas fa-arrow-down"></i>
+                                {% endif %}
+                                {{ prediction['change'] }}%
+                            </td>
+                            <td>{{ prediction['confidence'] }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="download-section">
+                <h3>Download Results</h3>
+                <div class="btn-group">
+                    <a href="{{ url_for('download_csv', ticker=ticker) }}" class="btn btn-primary btn-download">
+                        <i class="fas fa-file-csv"></i> Download CSV
+                    </a>
+                    <a href="{{ url_for('download_pdf', ticker=ticker) }}" class="btn btn-secondary btn-download">
+                        <i class="fas fa-file-pdf"></i> Download PDF Report
+                    </a>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 2rem;">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Predict Another Stock
+                </a>
+            </div>
+        </div>
+
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Model Information</h2>
+            </div>
+            
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="step-content">
+                        <h3>LSTM Neural Network</h3>
+                        <p>Our predictions use Long Short-Term Memory networks, which are especially good at learning patterns in sequential data like stock prices.</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="step-content">
+                        <h3>Accuracy</h3>
+                        <p>The model is trained on the past {{ training_days }} days of data and has an average accuracy of {{ accuracy }}% when predicting next-day prices.</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="step-content">
+                        <h3>Disclaimer</h3>
+                        <p>These predictions are for educational purposes only. Stock markets are influenced by many factors that cannot be predicted. Always consult with a financial advisor before making investment decisions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <p>Stock Price Prediction Tool &copy; 2025 | Using LSTM Neural Networks</p>
+        <p><small>Disclaimer: Predictions are for educational purposes only and should not be used for financial decisions.</small></p>
+    </footer>
+
+</body>
+</html>
